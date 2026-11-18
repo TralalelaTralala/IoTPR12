@@ -1,0 +1,61 @@
+{
+  "namespace": "urn:iotpr12:modbus-opcua-gateway",
+  "root": "Plant",
+  "objects": [
+    {
+      "name": "Tank1",
+      "description": "Unit 1 — резервуар з нагрівачем (Modbus TCP, slave 1)",
+      "quality_item": "Unit1_Quality",
+      "variables": [
+        { "name": "Temperature",     "item": "Tank_Temperature",     "type": "Double",  "eu": "CEL", "eu_name": "°C",   "range": [-50, 150], "modbus": "IR0 int16 x0.1",     "access": "r", "historize": true },
+        { "name": "Level",           "item": "Tank_Level",           "type": "Double",  "eu": "P1",  "eu_name": "%",    "range": [0, 100],   "modbus": "IR1 uint16 x0.1",    "access": "r" },
+        { "name": "Pressure",        "item": "Tank_Pressure",        "type": "Double",  "eu": "BAR", "eu_name": "bar",  "range": [0, 10],    "modbus": "IR2 uint16 x0.01",   "access": "r" },
+        { "name": "StatusWord",      "item": "Tank_StatusWord",      "type": "UInt16",                                                       "modbus": "IR3 uint16 bitmask", "access": "r" },
+        { "name": "HeaterEnergy",    "item": "Tank_Energy",          "type": "Double",  "eu": "KWH", "eu_name": "kWh",  "range": [0, 100000], "modbus": "IR4-5 float32",     "access": "r", "historize": true },
+        { "name": "TempSetpoint",    "item": "Tank_TempSetpoint",    "type": "Double",  "eu": "CEL", "eu_name": "°C",   "range": [20, 80],   "modbus": "HR0 int16 x0.1",     "access": "rw" },
+        { "name": "LevelHighLimit",  "item": "Tank_LevelHighLimit",  "type": "Double",  "eu": "P1",  "eu_name": "%",    "range": [50, 98],   "modbus": "HR1 uint16 x0.1",    "access": "rw" },
+        { "name": "LevelLowLimit",   "item": "Tank_LevelLowLimit",   "type": "Double",  "eu": "P1",  "eu_name": "%",    "range": [5, 40],    "modbus": "HR2 uint16 x0.1",    "access": "rw" },
+        { "name": "HeaterOn",        "item": "Tank_Heater",          "type": "Boolean",                                                      "modbus": "Coil0",              "access": "rw" },
+        { "name": "InletValveOpen",  "item": "Tank_InletValve",      "type": "Boolean",                                                      "modbus": "Coil1",              "access": "rw" },
+        { "name": "LevelHighSwitch", "item": "Tank_LevelHighSwitch", "type": "Boolean",                                                      "modbus": "DI0",                "access": "r" },
+        { "name": "LevelLowSwitch",  "item": "Tank_LevelLowSwitch",  "type": "Boolean",                                                      "modbus": "DI1",                "access": "r" },
+        { "name": "OvertempSwitch",  "item": "Tank_OvertempSwitch",  "type": "Boolean",                                                      "modbus": "DI2",                "access": "r" }
+      ]
+    },
+    {
+      "name": "Pump1",
+      "description": "Unit 2 — насос з частотником (Modbus RTU over TCP, slave 2)",
+      "quality_item": "Unit2_Quality",
+      "variables": [
+        { "name": "Speed",           "item": "Pump_Speed",           "type": "Double",  "eu": "RPM", "eu_name": "rpm",  "range": [0, 2900],  "modbus": "IR0 uint16",         "access": "r" },
+        { "name": "MotorCurrent",    "item": "Pump_Current",         "type": "Double",  "eu": "AMP", "eu_name": "A",    "range": [0, 10],    "modbus": "IR1 uint16 x0.01",   "access": "r", "historize": true },
+        { "name": "Flow",            "item": "Pump_Flow",            "type": "Double",  "eu": "MQH", "eu_name": "m³/h", "range": [0, 12],    "modbus": "IR2 uint16 x0.1",    "access": "r" },
+        { "name": "MotorTemperature","item": "Pump_MotorTemp",       "type": "Double",  "eu": "CEL", "eu_name": "°C",   "range": [-20, 120], "modbus": "IR3 int16 x0.1",     "access": "r" },
+        { "name": "RunTime",         "item": "Pump_RunTime",         "type": "UInt32",  "eu": "SEC", "eu_name": "s",                         "modbus": "IR4-5 uint32",       "access": "r" },
+        { "name": "SpeedSetpoint",   "item": "Pump_SpeedSetpoint",   "type": "Double",  "eu": "P1",  "eu_name": "%",    "range": [0, 100],   "modbus": "HR0 uint16",         "access": "rw" },
+        { "name": "Run",             "item": "Pump_Run",             "type": "Boolean",                                                      "modbus": "Coil0",              "access": "rw" },
+        { "name": "FaultReset",      "item": "Pump_FaultReset",      "type": "Boolean",                                                      "modbus": "Coil1 (pulse)",      "access": "rw" },
+        { "name": "Running",         "item": "Pump_RunningFb",       "type": "Boolean",                                                      "modbus": "DI0",                "access": "r" },
+        { "name": "Fault",           "item": "Pump_Fault",           "type": "Boolean",                                                      "modbus": "DI1",                "access": "r" },
+        { "name": "DryRun",          "item": "Pump_DryRun",          "type": "Boolean",                                                      "modbus": "DI2",                "access": "r" }
+      ]
+    },
+    {
+      "name": "Alarms",
+      "description": "Аварії, згенеровані правилами openHAB",
+      "variables": [
+        { "name": "HighTemperature", "item": "Alarm_HighTemp",       "type": "Boolean", "access": "r" },
+        { "name": "LowLevel",        "item": "Alarm_LowLevel",       "type": "Boolean", "access": "r" },
+        { "name": "HighLevel",       "item": "Alarm_HighLevel",      "type": "Boolean", "access": "r" },
+        { "name": "PumpFault",       "item": "Alarm_PumpFault",      "type": "Boolean", "access": "r" },
+        { "name": "MotorOverload",   "item": "Alarm_MotorOverload",  "type": "Boolean", "access": "r" },
+        { "name": "CommUnit1",       "item": "Alarm_CommUnit1",      "type": "Boolean", "access": "r" },
+        { "name": "CommUnit2",       "item": "Alarm_CommUnit2",      "type": "Boolean", "access": "r" },
+        { "name": "ActiveCount",     "item": "Alarm_ActiveCount",    "type": "UInt16",  "access": "r" },
+        { "name": "Unacknowledged",  "item": "Alarm_Unacked",        "type": "Boolean", "access": "r" },
+        { "name": "LastEvent",       "item": "Alarm_Last",           "type": "String",  "access": "r" },
+        { "name": "AutoMode",        "item": "Auto_Mode",            "type": "Boolean", "access": "rw" }
+      ]
+    }
+  ]
+}

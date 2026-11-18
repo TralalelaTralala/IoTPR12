@@ -1,0 +1,172 @@
+{
+ "1": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/01_0m00s.wav",
+  "vs": 0.15,
+  "ve": 6.7299999999999995,
+  "ws": 0.0,
+  "we": 6.88,
+  "first": " Добрий",
+  "last": " 5.",
+  "text": " Добрий день, мене звати Владислав Крисенко, група ІК41, практична робота 12, варіант 5."
+ },
+ "2": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/02_0m08s.wav",
+  "vs": 0.22,
+  "ve": 12.45,
+  "ws": 0.0,
+  "we": 12.54,
+  "first": " Тема",
+  "last": " серверу.",
+  "text": " Тема – промисловий шлюз Modbus та OPC UA через OpenHub. Резервуар працює по Modbus TCP, насос по Modbus RTU поверх TCP. OpenHub опитує обидва і віддає дані OPC UA серверу."
+ },
+ "3": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/03_0m21s.wav",
+  "vs": 0.2,
+  "ve": 11.52,
+  "ws": 0.0,
+  "we": 11.7,
+  "first": " Карта",
+  "last": " регістрів.",
+  "text": " Карта регістрів, інпут і холдінг-регістри, койли та дискретні входи. Siri-значення масштабуються JavaScript-трансформаціями, а Float і Ewing 32 збираються з двох регістрів."
+ },
+ "4": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/04_0m34s.wav",
+  "vs": 0.15,
+  "ve": 7.87,
+  "ws": 0.0,
+  "we": 7.96,
+  "first": " Це",
+  "last": " good.",
+  "text": " Це скада дашборд у Basic UI. Температура, рівень і тиск надходять із модбасу щосекунди. Якість даних обох пристроїв good."
+ },
+ "5": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/05_0m48s.wav",
+  "vs": 0.22,
+  "ve": 12.12,
+  "ws": 0.0,
+  "we": 12.2,
+  "first": " Ручне",
+  "last": " падати.",
+  "text": " Ручне керування, закриваю впускний клапан, ставлю швидкість насоса 100% і запускаю його. Команда йде в койл. Частотник розганяє двигун, росте струм, а рівень у баку починає падати."
+ },
+ "6": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/06_1m05s.wav",
+  "vs": 0.2,
+  "ve": 7.57,
+  "ws": 0.0,
+  "we": 7.66,
+  "first": " Діагностика",
+  "last": " читання.",
+  "text": " Діагностика показує сері регістри насоса, швидкість, струм, напрацювання як Qint32 і час останнього читання."
+ },
+ "7": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/07_1m16s.wav",
+  "vs": 0.15,
+  "ve": 6.09,
+  "ws": 0.0,
+  "we": 6.12,
+  "first": " Тепер",
+  "last": " шифруванням.",
+  "text": " Тепер описі UA-клієнт. Сервер має три точки доступу, без захисту, з підписом і з шифруванням."
+ },
+ "8": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/08_1m25s.wav",
+  "vs": 0.52,
+  "ve": 8.89,
+  "ws": 0.0,
+  "we": 9.0,
+  "first": " Користувачу",
+  "last": " зміни.",
+  "text": " Користувачу Viewer запис заборонено. Оператор через шифруваний канал змінює уставку, запускає насос, читає історію і підписується на зміни."
+ },
+ "9": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/09_1m35s.wav",
+  "vs": 0.38,
+  "ve": 4.6899999999999995,
+  "ws": 0.0,
+  "we": 4.74,
+  "first": " Уставка",
+  "last": " дашборді.",
+  "text": " Уставка 62 градуси, записана за PCUA, видна і в дашборді."
+ },
+ "10": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/10_1m42s.wav",
+  "vs": 0.41000000000000003,
+  "ve": 9.31,
+  "ws": 0.0,
+  "we": 9.38,
+  "first": " Бак",
+  "last": " журнал.",
+  "text": " Бак спорожнився і спрацював захист від сухого ходу. Правила Оупенхабу створили аварії низького рівня та аварію насоса. Усе записано в журнал."
+ },
+ "11": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/11_1m53s.wav",
+  "vs": 0.36,
+  "ve": 9.98,
+  "ws": 0.0,
+  "we": 10.06,
+  "first": " Оператор",
+  "last": " гістерезесом.",
+  "text": " Оператор зупиняє насос, скидає аварію і квитує її. Далі вмикає автоматичний режим, правило відкриває клапан і керує нагрівачем за уставкою з гістерезесом."
+ },
+ "12": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/12_2m06s.wav",
+  "vs": 0.21,
+  "ve": 7.66,
+  "ws": 0.0,
+  "we": 7.72,
+  "first": " Усі",
+  "last": " годину.",
+  "text": " Усі показники зберігаються в RRD4J. Тут тренди температури, рівня і насоса, а нижчі агрегати за останню годину."
+ },
+ "13": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/13_2m18s.wav",
+  "vs": 0.4,
+  "ve": 3.5999999999999996,
+  "ws": 0.0,
+  "we": 3.64,
+  "first": " Тепер",
+  "last": "'язку.",
+  "text": " Тепер вимикаю Modbus-симулятор, імітуючи втрату зв'язку."
+ },
+ "14": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/14_2m26s.wav",
+  "vs": 0.55,
+  "ve": 3.09,
+  "ws": 0.0,
+  "we": 3.14,
+  "first": " Якість",
+  "last": " застаріли.",
+  "text": " Якість переходить в ансертейн, дані застаріли."
+ },
+ "15": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/15_2m30s.wav",
+  "vs": 0.4,
+  "ve": 5.45,
+  "ws": 0.0,
+  "we": 5.54,
+  "first": " А",
+  "last": " Error.",
+  "text": " А потім у BED спрацювали аварії зв'язку, а в опі CUA статус BED Communication Error."
+ },
+ "16": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/16_2m36s.wav",
+  "vs": 0.22,
+  "ve": 4.25,
+  "ws": 0.0,
+  "we": 4.32,
+  "first": " Вмикаю",
+  "last": " вгуд.",
+  "text": " Вмикаю пристрій назад, шлюз перепідключається сам і якесь знову вгуд."
+ },
+ "17": {
+  "file": "C:/Users/tplin/Documents/Codex/2026-10-23/new-chat/IOTPR12/video/voiceover/segments/17_2m44s.wav",
+  "vs": 0.42,
+  "ve": 10.04,
+  "ws": 0.0,
+  "we": 10.12,
+  "first": " Отже,",
+  "last": " увагу.",
+  "text": " Отже, шлюз об'єднує Modbus, TCP та RTU з OPC UA і підтримує коди якості, безпеку, аварії, історію та автоматичне перепідключення. Дякую за увагу."
+ }
+}

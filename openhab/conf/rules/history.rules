@@ -1,0 +1,27 @@
+// Запити до історії (RRD4j persistence): агрегати за останню годину, щохвилини.
+// Ті самі дані доступні через REST: GET /rest/persistence/items/<item>?starttime=...&endtime=...
+// (див. scripts/history.sh) і в OPC UA через HistoryRead (див. opcua-bridge).
+
+rule "Історія: агрегати за 1 годину"
+when
+    Time cron "30 * * * * ?"
+then
+    val since = now.minusHours(1)
+
+    val avgT = Tank_Temperature.averageSince(since, "rrd4j")
+    val minT = Tank_Temperature.minimumSince(since, "rrd4j")
+    val maxT = Tank_Temperature.maximumSince(since, "rrd4j")
+    val avgL = Tank_Level.averageSince(since, "rrd4j")
+    val maxI = Pump_Current.maximumSince(since, "rrd4j")
+    val e0   = Tank_Energy.persistedState(since, "rrd4j")
+
+    if (avgT instanceof Number) Tank_Temp_Avg1h.postUpdate(Math.round((avgT as Number).doubleValue * 10) / 10.0)
+    if (minT !== null && minT.state instanceof Number) Tank_Temp_Min1h.postUpdate(minT.state.toString)
+    if (maxT !== null && maxT.state instanceof Number) Tank_Temp_Max1h.postUpdate(maxT.state.toString)
+    if (avgL instanceof Number) Tank_Level_Avg1h.postUpdate(Math.round((avgL as Number).doubleValue * 10) / 10.0)
+    if (maxI !== null && maxI.state instanceof Number) Pump_Current_Max1h.postUpdate(maxI.state.toString)
+    if (e0 !== null && e0.state instanceof Number && Tank_Energy.state instanceof Number) {
+        val de = (Tank_Energy.state as Number).doubleValue - (e0.state as Number).doubleValue
+        Heater_Energy_1h.postUpdate(Math.round(Math.max(0.0, de) * 1000) / 1000.0)
+    }
+end

@@ -1,0 +1,48 @@
+// Автоматичний режим (Auto_Mode = ON): openHAB керує Modbus-виходами через coils.
+//   * термостат з гістерезисом: нагрівач ON при T < SP - 1, OFF при T > SP + 0.5
+//   * підтримка рівня: клапан відкривається при L < LowLimit + 10, закривається при L > HighLimit - 5
+//   * блокування насоса: при L < 8 % насос зупиняється (захист від сухого ходу)
+// У ручному режимі (OFF) оператор сам керує нагрівачем, клапаном і насосом (з sitemap або через OPC UA).
+
+rule "Авто: регулювання (кожні 2 с)"
+when
+    Time cron "1/2 * * * * ?"
+then
+    if (Auto_Mode.state != ON) return;
+    if (Unit1_Quality.state.toString == "BAD_COMM") return;   // не керуємо "наосліп"
+    if (!(Tank_Temperature.state instanceof Number) || !(Tank_Level.state instanceof Number)) return;
+
+    val t  = (Tank_Temperature.state as Number).doubleValue
+    val l  = (Tank_Level.state as Number).doubleValue
+    val sp = if (Tank_TempSetpoint.state instanceof Number) (Tank_TempSetpoint.state as Number).doubleValue else 60.0
+    val lo = if (Tank_LevelLowLimit.state instanceof Number) (Tank_LevelLowLimit.state as Number).doubleValue else 15.0
+    val hi = if (Tank_LevelHighLimit.state instanceof Number) (Tank_LevelHighLimit.state as Number).doubleValue else 90.0
+
+    if (t < sp - 1.0 && Tank_Heater.state != ON) {
+        Tank_Heater.sendCommand(ON)
+        logInfo("control", "auto: heater ON (T=" + t + ", SP=" + sp + ")")
+    } else if (t > sp + 0.5 && Tank_Heater.state != OFF) {
+        Tank_Heater.sendCommand(OFF)
+        logInfo("control", "auto: heater OFF (T=" + t + ", SP=" + sp + ")")
+    }
+
+    if (l < lo + 10.0 && Tank_InletValve.state != ON) {
+        Tank_InletValve.sendCommand(ON)
+        logInfo("control", "auto: inlet valve OPEN (L=" + l + ")")
+    } else if (l > hi - 5.0 && Tank_InletValve.state != OFF) {
+        Tank_InletValve.sendCommand(OFF)
+        logInfo("control", "auto: inlet valve CLOSED (L=" + l + ")")
+    }
+
+    if (l < 8.0 && Pump_Run.state == ON) {
+        Pump_Run.sendCommand(OFF)
+        logWarn("control", "auto: pump interlock — level " + l + " % < 8 %")
+    }
+end
+
+rule "Авто: увімкнення/вимкнення режиму"
+when
+    Item Auto_Mode changed
+then
+    logInfo("control", "Auto mode -> " + Auto_Mode.state)
+end

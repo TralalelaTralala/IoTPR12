@@ -1,0 +1,76 @@
+// Modbus-пристрої промислового шлюзу (практична робота 12.1, варіант 5).
+//
+//   unit1 — резервуар з нагрівачем: Modbus TCP (MBAP), slave id 1, порт 5020
+//   unit2 — насос з частотником:   Modbus RTU поверх TCP (кадр RTU + CRC16), slave id 2, порт 5021
+//
+// Кожна область пам'яті читається окремим poller-ом (окремий код функції):
+//   coil -> FC01, discrete -> FC02, holding -> FC03, input -> FC04
+// Запис: coil -> FC05 (або FC15), holding -> FC06 (або FC16 при writeMultipleEvenWithSingleRegisterOrCoil=true).
+// Масштабування сирих значень — JS-трансформації з conf/transform (divide10.js, multiply10.js ...).
+
+Bridge modbus:tcp:unit1 "Unit 1 — резервуар (Modbus TCP)" [ host="172.30.12.10", port=5020, id=1, timeBetweenTransactionsMillis=20, connectMaxTries=3, reconnectAfterMillis=0, connectTimeoutMillis=3000, enableDiscovery=false ] {
+
+    // FC04 Input Registers 0..5
+    Bridge poller u1_ir "Unit1 IR 0..5 (FC04)" [ start=0, length=6, refresh=1000, type="input", maxTries=3 ] {
+        Thing data temperature  "Температура води"     [ readStart="0",   readValueType="int16",  readTransform="JS(divide10.js)" ]
+        Thing data level        "Рівень"               [ readStart="1",   readValueType="uint16", readTransform="JS(divide10.js)" ]
+        Thing data pressure     "Тиск"                 [ readStart="2",   readValueType="uint16", readTransform="JS(divide100.js)" ]
+        Thing data status       "Слово стану"          [ readStart="3",   readValueType="uint16" ]
+        Thing data overtemp_bit "Біт перегріву IR3.2"  [ readStart="3.2", readValueType="bit" ]
+        Thing data energy       "Енергія нагрівача"    [ readStart="4",   readValueType="float32" ]
+    }
+
+    // FC03 Holding Registers 0..2 (уставки), запис FC06 / FC16
+    Bridge poller u1_hr "Unit1 HR 0..2 (FC03)" [ start=0, length=3, refresh=2000, type="holding", maxTries=3 ] {
+        Thing data temp_sp  "Уставка температури"  [ readStart="0", readValueType="int16",  readTransform="JS(divide10.js)",
+                                                     writeStart="0", writeValueType="int16", writeType="holding", writeTransform="JS(multiply10.js)" ]
+        Thing data level_hi "Верхня межа рівня"    [ readStart="1", readValueType="uint16", readTransform="JS(divide10.js)",
+                                                     writeStart="1", writeValueType="int16", writeType="holding", writeTransform="JS(multiply10.js)",
+                                                     writeMultipleEvenWithSingleRegisterOrCoil=true ]
+        Thing data level_lo "Нижня межа рівня"     [ readStart="2", readValueType="uint16", readTransform="JS(divide10.js)",
+                                                     writeStart="2", writeValueType="int16", writeType="holding", writeTransform="JS(multiply10.js)",
+                                                     writeMultipleEvenWithSingleRegisterOrCoil=true ]
+    }
+
+    // FC01 Coils 0..1, запис FC05 / FC15
+    Bridge poller u1_coils "Unit1 Coils 0..1 (FC01)" [ start=0, length=2, refresh=1000, type="coil", maxTries=3 ] {
+        Thing data heater "Нагрівач"          [ readStart="0", readValueType="bit", writeStart="0", writeValueType="bit", writeType="coil" ]
+        Thing data inlet  "Впускний клапан"   [ readStart="1", readValueType="bit", writeStart="1", writeValueType="bit", writeType="coil",
+                                                writeMultipleEvenWithSingleRegisterOrCoil=true ]
+    }
+
+    // FC02 Discrete Inputs 0..2
+    Bridge poller u1_di "Unit1 DI 0..2 (FC02)" [ start=0, length=3, refresh=1000, type="discrete", maxTries=3 ] {
+        Thing data level_hi_sw "Датчик верхнього рівня" [ readStart="0", readValueType="bit" ]
+        Thing data level_lo_sw "Датчик нижнього рівня"  [ readStart="1", readValueType="bit" ]
+        Thing data overtemp_sw "Термостат перегріву"    [ readStart="2", readValueType="bit" ]
+    }
+}
+
+// rtuEncoded=true: openHAB відправляє кадри Modbus RTU (адреса + PDU + CRC16) через TCP-з'єднання
+// (типова схема для перетворювачів RS-485 <-> Ethernet).
+Bridge modbus:tcp:unit2 "Unit 2 — насос (Modbus RTU over TCP)" [ host="172.30.12.10", port=5021, id=2, rtuEncoded=true, timeBetweenTransactionsMillis=35, connectMaxTries=3, reconnectAfterMillis=0, connectTimeoutMillis=3000, enableDiscovery=false ] {
+
+    Bridge poller u2_ir "Unit2 IR 0..5 (FC04)" [ start=0, length=6, refresh=1000, type="input", maxTries=3 ] {
+        Thing data speed     "Швидкість двигуна"   [ readStart="0", readValueType="uint16" ]
+        Thing data current   "Струм двигуна"       [ readStart="1", readValueType="uint16", readTransform="JS(divide100.js)" ]
+        Thing data flow      "Витрата"             [ readStart="2", readValueType="uint16", readTransform="JS(divide10.js)" ]
+        Thing data motor_t   "Температура двигуна" [ readStart="3", readValueType="int16",  readTransform="JS(divide10.js)" ]
+        Thing data runtime   "Напрацювання"        [ readStart="4", readValueType="uint32" ]
+    }
+
+    Bridge poller u2_hr "Unit2 HR 0 (FC03)" [ start=0, length=1, refresh=2000, type="holding", maxTries=3 ] {
+        Thing data speed_sp "Уставка швидкості" [ readStart="0", readValueType="uint16", writeStart="0", writeValueType="int16", writeType="holding" ]
+    }
+
+    Bridge poller u2_coils "Unit2 Coils 0..1 (FC01)" [ start=0, length=2, refresh=1000, type="coil", maxTries=3 ] {
+        Thing data run   "Пуск насоса"   [ readStart="0", readValueType="bit", writeStart="0", writeValueType="bit", writeType="coil" ]
+        Thing data reset "Скидання аварії" [ readStart="1", readValueType="bit", writeStart="1", writeValueType="bit", writeType="coil" ]
+    }
+
+    Bridge poller u2_di "Unit2 DI 0..2 (FC02)" [ start=0, length=3, refresh=1000, type="discrete", maxTries=3 ] {
+        Thing data running_fb "Зворотний зв'язок: працює" [ readStart="0", readValueType="bit" ]
+        Thing data fault      "Аварія частотника"         [ readStart="1", readValueType="bit" ]
+        Thing data dry_run    "Сухий хід"                 [ readStart="2", readValueType="bit" ]
+    }
+}

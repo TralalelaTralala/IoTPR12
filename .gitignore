@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+.env
+video/out/
+video/voiceover/*.wav
+video/voiceover/segments/

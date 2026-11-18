@@ -1,0 +1,139 @@
+// Генерація аварій (Alarm management) з гістерезисом, журнал подій і квитування.
+//
+//  Аварія             | Увімкнення                         | Вимкнення
+//  -------------------|------------------------------------|-------------------------------
+//  Alarm_HighTemp     | T > 80 °C або термостат (DI2)      | T < 75 °C і термостат скинуто
+//  Alarm_LowLevel     | L <= нижньої межі (HR2)            | L > нижньої межі + 3 %
+//  Alarm_HighLevel    | L >= верхньої межі (HR1)           | L < верхньої межі - 3 %
+//  Alarm_PumpFault    | DI "аварія частотника" = 1         | DI = 0
+//  Alarm_MotorOverload| I > 7 A                           | I < 6 A
+//  Alarm_CommUnitN    | якість Unit N = BAD_COMM           | якість != BAD_COMM
+
+import java.time.format.DateTimeFormatter
+
+val DateTimeFormatter TS = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+// встановлює/скидає аварію та пише подію в журнал
+val Functions$Function3<SwitchItem, Boolean, String, Boolean> setAlarm = [ alarm, active, text |
+    val wasOn = alarm.state == ON
+    if (active && !wasOn) {
+        alarm.postUpdate(ON)
+        val msg = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")) + " ▲ " + text
+        Alarm_Last.postUpdate(msg)
+        val prev = if (Alarm_Log.state instanceof StringType) Alarm_Log.state.toString else ""
+        var logText = msg + (if (prev == "") "" else " | " + prev)
+        val parts = newArrayList(logText.split(" \\| "))
+        if (parts.size > 6) {
+            logText = parts.subList(0, 6).join(" | ")
+        }
+        Alarm_Log.postUpdate(logText)
+        Alarm_Unacked.postUpdate(ON)
+        logWarn("alarms", "ALARM ON: " + text)
+        return true
+    }
+    if (!active && wasOn) {
+        alarm.postUpdate(OFF)
+        val msg = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")) + " ▼ " + text + " (норма)"
+        Alarm_Last.postUpdate(msg)
+        logInfo("alarms", "alarm off: " + text)
+        return true
+    }
+    return false
+]
+
+rule "Аварії: ініціалізація"
+when
+    System reached start level 100
+then
+    var int active = 0
+    for (a : gAlarms.members) {
+        if (a.state == NULL) postUpdate(a.name, "OFF")
+        if (a.state == ON) active = active + 1
+    }
+    if (Alarm_Unacked.state == NULL) Alarm_Unacked.postUpdate(OFF)
+    if (Alarm_Log.state == NULL) Alarm_Log.postUpdate("")
+    if (Alarm_Last.state == NULL) Alarm_Last.postUpdate("—")
+    if (Trend_Period.state == NULL) Trend_Period.postUpdate("h")
+    if (Auto_Mode.state == NULL) Auto_Mode.postUpdate(OFF)
+    Alarm_ActiveCount.postUpdate(active)
+end
+
+rule "Аварії: процесні"
+when
+    Item Tank_Temperature changed or
+    Item Tank_Level changed or
+    Item Tank_OvertempSwitch changed or
+    Item Tank_LevelHighLimit changed or
+    Item Tank_LevelLowLimit changed or
+    Item Pump_Fault changed or
+    Item Pump_Current changed
+then
+    // температура
+    if (Tank_Temperature.state instanceof Number) {
+        val t = (Tank_Temperature.state as Number).doubleValue
+        val thermo = Tank_OvertempSwitch.state == ON
+        if (t > 80.0 || thermo) {
+            setAlarm.apply(Alarm_HighTemp, true, "Висока температура " + String.format("%.1f", t) + " °C")
+        } else if (t < 75.0) {
+            setAlarm.apply(Alarm_HighTemp, false, "Висока температура")
+        }
+    }
+
+    // рівень
+    if (Tank_Level.state instanceof Number) {
+        val l = (Tank_Level.state as Number).doubleValue
+        val lo = if (Tank_LevelLowLimit.state instanceof Number) (Tank_LevelLowLimit.state as Number).doubleValue else 15.0
+        val hi = if (Tank_LevelHighLimit.state instanceof Number) (Tank_LevelHighLimit.state as Number).doubleValue else 90.0
+        if (l <= lo) {
+            setAlarm.apply(Alarm_LowLevel, true, "Низький рівень " + String.format("%.1f", l) + " %")
+        } else if (l > lo + 3) {
+            setAlarm.apply(Alarm_LowLevel, false, "Низький рівень")
+        }
+        if (l >= hi) {
+            setAlarm.apply(Alarm_HighLevel, true, "Переповнення " + String.format("%.1f", l) + " %")
+        } else if (l < hi - 3) {
+            setAlarm.apply(Alarm_HighLevel, false, "Переповнення")
+        }
+    }
+
+    // насос
+    setAlarm.apply(Alarm_PumpFault, Pump_Fault.state == ON, "Аварія насоса (сухий хід / частотник)")
+    if (Pump_Current.state instanceof Number) {
+        val i = (Pump_Current.state as Number).doubleValue
+        if (i > 7.0) {
+            setAlarm.apply(Alarm_MotorOverload, true, "Перевантаження двигуна " + String.format("%.2f", i) + " A")
+        } else if (i < 6.0) {
+            setAlarm.apply(Alarm_MotorOverload, false, "Перевантаження двигуна")
+        }
+    }
+end
+
+rule "Аварії: зв'язок"
+when
+    Item Unit1_Quality changed or
+    Item Unit2_Quality changed
+then
+    setAlarm.apply(Alarm_CommUnit1, Unit1_Quality.state.toString == "BAD_COMM", "Немає зв'язку з Unit 1 (Modbus TCP)")
+    setAlarm.apply(Alarm_CommUnit2, Unit2_Quality.state.toString == "BAD_COMM", "Немає зв'язку з Unit 2 (Modbus RTU/TCP)")
+end
+
+rule "Аварії: лічильник активних"
+when
+    Member of gAlarms changed
+then
+    var int active = 0
+    for (a : gAlarms.members) {
+        if (a.state == ON) active = active + 1
+    }
+    Alarm_ActiveCount.postUpdate(active)
+end
+
+rule "Аварії: квитування"
+when
+    Item Alarm_Ack received command ON
+then
+    Alarm_Unacked.postUpdate(OFF)
+    Alarm_Last.postUpdate(now.format(TS) + " ✔ аварії квитовано оператором")
+    logInfo("alarms", "alarms acknowledged")
+    Alarm_Ack.postUpdate(OFF)
+end

@@ -1,0 +1,131 @@
+sitemap scada label="SCADA: Modbus → openHAB → OPC UA" {
+
+    Frame label="Огляд процесу" {
+        Text item=Tank_Temperature  valuecolor=[>80="red", >70="orange", <=70="green"]
+        Text item=Tank_Level        valuecolor=[<=15="red", >=90="red", <=25="orange", >=80="orange", >25="green"]
+        Text item=Tank_Pressure
+        Text item=Pump_Speed        valuecolor=[==0="gray", >0="green"]
+        Text item=Pump_Flow
+        Text item=Pump_Current      valuecolor=[>7="red", >5="orange", <=5="green"]
+        Text item=Alarm_ActiveCount valuecolor=[>0="red", ==0="green"]
+        Text item=Unit1_Quality     valuecolor=[GOOD="green", UNCERTAIN_STALE="orange", BAD_COMM="red"]
+        Text item=Unit2_Quality     valuecolor=[GOOD="green", UNCERTAIN_STALE="orange", BAD_COMM="red"]
+    }
+
+    Frame label="Керування" {
+        Switch   item=Auto_Mode          mappings=[OFF="Ручний", ON="Авто"]
+        Switch   item=Tank_Heater        visibility=[Auto_Mode!=ON]
+        Text     item=Tank_Heater        visibility=[Auto_Mode==ON] label="Нагрівач (авто) [%s]"
+        Switch   item=Tank_InletValve    visibility=[Auto_Mode!=ON] mappings=[OFF="Закрити", ON="Відкрити"]
+        Text     item=Tank_InletValve    visibility=[Auto_Mode==ON] label="Впускний клапан (авто) [%s]"
+        Setpoint item=Tank_TempSetpoint  minValue=20 maxValue=80 step=1
+        Switch   item=Pump_Run           mappings=[OFF="Стоп", ON="Пуск"]
+        Setpoint item=Pump_SpeedSetpoint minValue=0 maxValue=100 step=10
+        Switch   item=Pump_FaultReset    mappings=[ON="Скинути аварію"] visibility=[Pump_Fault==ON]
+        Text label="Межі рівня (HR1/HR2)" icon="water" {
+            Frame {
+                Setpoint item=Tank_LevelHighLimit minValue=50 maxValue=98 step=1
+                Setpoint item=Tank_LevelLowLimit  minValue=5  maxValue=40 step=1
+            }
+        }
+    }
+
+    Frame label="Аварії" {
+        Text   item=Alarm_Unacked       valuecolor=[ON="red", OFF="green"]
+        Switch item=Alarm_Ack           mappings=[ON="Квитувати"] visibility=[Alarm_Unacked==ON]
+        Text   item=Alarm_Last
+        Text   item=Alarm_HighTemp      valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_LowLevel      valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_HighLevel     valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_PumpFault     valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_MotorOverload valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_CommUnit1     valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_CommUnit2     valuecolor=[ON="red", OFF="green"]
+        Text   item=Alarm_Log
+    }
+
+    Frame label="Тренди (real-time, RRD4j)" {
+        Switch item=Trend_Period mappings=[h="1 год", 4h="4 год", D="Доба"]
+        Chart item=gChartTemp     period=h  refresh=10000 legend=true visibility=[Trend_Period=="h", Trend_Period==NULL]
+        Chart item=gChartLevel    period=h  refresh=10000 visibility=[Trend_Period=="h", Trend_Period==NULL]
+        Chart item=gChartPump     period=h  refresh=10000 legend=true visibility=[Trend_Period=="h", Trend_Period==NULL]
+        Chart item=gChartPressure period=h  refresh=10000 visibility=[Trend_Period=="h", Trend_Period==NULL]
+        Chart item=gChartTemp     period=4h refresh=30000 legend=true visibility=[Trend_Period=="4h"]
+        Chart item=gChartLevel    period=4h refresh=30000 visibility=[Trend_Period=="4h"]
+        Chart item=gChartPump     period=4h refresh=30000 legend=true visibility=[Trend_Period=="4h"]
+        Chart item=gChartPressure period=4h refresh=30000 visibility=[Trend_Period=="4h"]
+        Chart item=gChartTemp     period=D  refresh=60000 legend=true visibility=[Trend_Period=="D"]
+        Chart item=gChartLevel    period=D  refresh=60000 visibility=[Trend_Period=="D"]
+        Chart item=gChartPump     period=D  refresh=60000 legend=true visibility=[Trend_Period=="D"]
+        Chart item=gChartPressure period=D  refresh=60000 visibility=[Trend_Period=="D"]
+    }
+
+    Frame label="Історія: агрегати за останню годину" {
+        Text item=Tank_Temp_Avg1h
+        Text item=Tank_Temp_Min1h
+        Text item=Tank_Temp_Max1h
+        Text item=Tank_Level_Avg1h
+        Text item=Pump_Current_Max1h
+        Text item=Heater_Energy_1h
+    }
+
+    Frame label="Діагностика" {
+        Text label="Unit 1 — резервуар (Modbus TCP, id 1)" icon="network" {
+            Frame label="Input Registers (FC04)" {
+                Text item=Tank_Temperature
+                Text item=Tank_Level
+                Text item=Tank_Pressure
+                Text item=Tank_StatusWord
+                Text item=Tank_OvertempBit
+                Text item=Tank_Energy
+            }
+            Frame label="Holding Registers (FC03/06/16)" {
+                Text item=Tank_TempSetpoint
+                Text item=Tank_LevelHighLimit
+                Text item=Tank_LevelLowLimit
+            }
+            Frame label="Coils (FC01/05/15) та Discrete Inputs (FC02)" {
+                Text item=Tank_Heater
+                Text item=Tank_InletValve
+                Text item=Tank_LevelHighSwitch
+                Text item=Tank_LevelLowSwitch
+                Text item=Tank_OvertempSwitch
+            }
+            Frame label="Зв'язок" {
+                Text item=Unit1_Quality valuecolor=[GOOD="green", UNCERTAIN_STALE="orange", BAD_COMM="red"]
+                Text item=Unit1_LastRead
+                Text item=Unit1_LastError
+            }
+        }
+        Text label="Unit 2 — насос (Modbus RTU over TCP, id 2)" icon="network" {
+            Frame label="Input Registers (FC04)" {
+                Text item=Pump_Speed
+                Text item=Pump_Current
+                Text item=Pump_Flow
+                Text item=Pump_MotorTemp
+                Text item=Pump_RunTime
+            }
+            Frame label="Holding / Coils / Discrete Inputs" {
+                Text item=Pump_SpeedSetpoint
+                Text item=Pump_Run
+                Text item=Pump_RunningFb
+                Text item=Pump_Fault
+                Text item=Pump_DryRun
+            }
+            Frame label="Зв'язок" {
+                Text item=Unit2_Quality valuecolor=[GOOD="green", UNCERTAIN_STALE="orange", BAD_COMM="red"]
+                Text item=Unit2_LastRead
+                Text item=Unit2_LastError
+            }
+        }
+        Text label="OPC UA сервер (opc.tcp://localhost:4840)" icon="network" {
+            Frame {
+                Text item=OPCUA_Status
+                Text item=OPCUA_Clients
+                Text item=OPCUA_Subscriptions
+                Text item=OPCUA_Writes
+                Text item=OPCUA_Heartbeat
+            }
+        }
+    }
+}

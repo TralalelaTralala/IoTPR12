@@ -1,0 +1,12 @@
+// Історизація даних у локальну базу RRD4j (userdata/persistence/rrd4j/*.rrd).
+// everyMinute потрібен для графіків: RRD4j зберігає значення з кроком 1 хв.
+Strategies {
+    everyMinute : "0 * * * * ?"
+    default = everyChange
+}
+
+Items {
+    gHistory* : strategy = everyChange, everyMinute, restoreOnStartup
+    gAlarms*  : strategy = everyChange, restoreOnStartup
+    Tank_Temp_Avg1h, Tank_Temp_Min1h, Tank_Temp_Max1h, Tank_Level_Avg1h, Pump_Current_Max1h, Heater_Energy_1h : strategy = everyChange, restoreOnStartup
+}

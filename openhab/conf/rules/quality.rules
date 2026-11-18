@@ -1,0 +1,51 @@
+// Коди якості даних (Quality codes) для кожного Modbus-пристрою.
+// Логіка така сама, як у OPC UA StatusCode:
+//   GOOD            — Thing ONLINE і останнє успішне читання не старше 5 с
+//   UNCERTAIN_STALE — Thing ONLINE, але успішного читання не було 5..30 с (або ще жодного після старту)
+//   BAD_COMM        — Thing OFFLINE / остання помилка новіша за останній успіх / > 30 с без даних
+// opcua-bridge перетворює ці рядки на StatusCode вузлів OPC UA.
+
+val Functions$Function3<String, DateTimeType, DateTimeType, String> evalQuality = [ thingUid, lastOk, lastErr |
+    val status = getThingStatusInfo(thingUid)
+    if (status === null || status.status.toString != "ONLINE") {
+        return "BAD_COMM"
+    }
+    if (lastOk === null) {
+        return "UNCERTAIN_STALE"   // ще не було жодного читання після старту
+    }
+    val okTime = lastOk.zonedDateTime
+    if (lastErr !== null && lastErr.zonedDateTime.isAfter(okTime)) {
+        return "BAD_COMM"
+    }
+    if (okTime.isBefore(now.minusSeconds(30))) {
+        return "BAD_COMM"
+    }
+    if (okTime.isBefore(now.minusSeconds(5))) {
+        return "UNCERTAIN_STALE"
+    }
+    return "GOOD"
+]
+
+rule "Якість: оцінка стану Unit 1 та Unit 2 (кожні 2 с)"
+when
+    Time cron "0/2 * * * * ?" or
+    Thing "modbus:data:unit1:u1_ir:temperature" changed or
+    Thing "modbus:data:unit2:u2_ir:speed" changed
+then
+    val ok1  = if (Unit1_LastRead.state instanceof DateTimeType)  Unit1_LastRead.state as DateTimeType  else null
+    val err1 = if (Unit1_LastError.state instanceof DateTimeType) Unit1_LastError.state as DateTimeType else null
+    val ok2  = if (Unit2_LastRead.state instanceof DateTimeType)  Unit2_LastRead.state as DateTimeType  else null
+    val err2 = if (Unit2_LastError.state instanceof DateTimeType) Unit2_LastError.state as DateTimeType else null
+
+    val q1 = evalQuality.apply("modbus:data:unit1:u1_ir:temperature", ok1, err1)
+    val q2 = evalQuality.apply("modbus:data:unit2:u2_ir:speed", ok2, err2)
+
+    if (Unit1_Quality.state.toString != q1) {
+        logWarn("quality", "Unit 1: " + Unit1_Quality.state + " -> " + q1)
+        Unit1_Quality.postUpdate(q1)
+    }
+    if (Unit2_Quality.state.toString != q2) {
+        logWarn("quality", "Unit 2: " + Unit2_Quality.state + " -> " + q2)
+        Unit2_Quality.postUpdate(q2)
+    }
+end

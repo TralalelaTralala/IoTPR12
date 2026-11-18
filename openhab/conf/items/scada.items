@@ -1,0 +1,91 @@
+// Items промислового шлюзу Modbus -> openHAB -> OPC UA.
+// Кожен item, який публікується в OPC UA, описаний у opcua-bridge/mapping.json.
+
+Group gHistory        "Історизовані дані"
+Group gAlarms         "Аварії"
+Group gUnit1          "Unit 1 — резервуар"
+Group gUnit2          "Unit 2 — насос"
+
+// групи для графіків
+Group gChartTemp      "Температура та уставка"
+Group gChartLevel     "Рівень"
+Group gChartPump      "Насос: струм і витрата"
+Group gChartPressure  "Тиск"
+
+// ======================= Unit 1: резервуар (Modbus TCP) =======================
+// Input Registers (FC04)
+Number   Tank_Temperature     "Температура води [%.1f °C]"     <temperature> (gUnit1, gHistory, gChartTemp)  { channel="modbus:data:unit1:u1_ir:temperature:number" }
+Number   Tank_Level           "Рівень у резервуарі [%.1f %%]"  <water>       (gUnit1, gHistory, gChartLevel) { channel="modbus:data:unit1:u1_ir:level:number" }
+Number   Tank_Pressure        "Тиск [%.2f bar]"                 <pressure>    (gUnit1, gHistory, gChartPressure) { channel="modbus:data:unit1:u1_ir:pressure:number" }
+Number   Tank_StatusWord      "Слово стану IR3 [%d]"            <settings>    (gUnit1)                        { channel="modbus:data:unit1:u1_ir:status:number" }
+Switch   Tank_OvertempBit     "Біт перегріву (IR3.2) [MAP(onoff.map):%s]" <fire> (gUnit1)                    { channel="modbus:data:unit1:u1_ir:overtemp_bit:switch" }
+Number   Tank_Energy          "Енергія нагрівача [%.3f kWh]"    <energy>      (gUnit1, gHistory)              { channel="modbus:data:unit1:u1_ir:energy:number" }
+DateTime Unit1_LastRead       "Unit 1: останнє читання [%1$tH:%1$tM:%1$tS]" <time> (gUnit1)                 { channel="modbus:data:unit1:u1_ir:temperature:lastReadSuccess" }
+DateTime Unit1_LastError      "Unit 1: остання помилка [%1$tH:%1$tM:%1$tS]" <time> (gUnit1)                 { channel="modbus:data:unit1:u1_ir:temperature:lastReadError" }
+
+// Holding Registers (FC03 / FC06 / FC16)
+Number   Tank_TempSetpoint    "Уставка температури [%.1f °C]"  <heating>     (gUnit1, gHistory, gChartTemp)  { channel="modbus:data:unit1:u1_hr:temp_sp:number" }
+Number   Tank_LevelHighLimit  "Верхня межа рівня [%.1f %%]"     <water>       (gUnit1, gHistory)              { channel="modbus:data:unit1:u1_hr:level_hi:number" }
+Number   Tank_LevelLowLimit   "Нижня межа рівня [%.1f %%]"      <water>       (gUnit1, gHistory)              { channel="modbus:data:unit1:u1_hr:level_lo:number" }
+
+// Coils (FC01 / FC05 / FC15)
+Switch   Tank_Heater          "Нагрівач 3 кВт"                  <heating>     (gUnit1, gHistory)              { channel="modbus:data:unit1:u1_coils:heater:switch" }
+Switch   Tank_InletValve      "Впускний клапан"                 <flow>        (gUnit1, gHistory)              { channel="modbus:data:unit1:u1_coils:inlet:switch" }
+
+// Discrete Inputs (FC02)
+Switch   Tank_LevelHighSwitch "Датчик верхнього рівня [MAP(onoff.map):%s]" <water> (gUnit1, gHistory)        { channel="modbus:data:unit1:u1_di:level_hi_sw:switch" }
+Switch   Tank_LevelLowSwitch  "Датчик нижнього рівня [MAP(onoff.map):%s]"  <water> (gUnit1, gHistory)        { channel="modbus:data:unit1:u1_di:level_lo_sw:switch" }
+Switch   Tank_OvertempSwitch  "Термостат перегріву [MAP(onoff.map):%s]"    <fire>  (gUnit1, gHistory)        { channel="modbus:data:unit1:u1_di:overtemp_sw:switch" }
+
+String   Unit1_Quality        "Якість даних Unit 1 [MAP(quality.map):%s]" <network> (gUnit1, gHistory)
+
+// ======================= Unit 2: насос (Modbus RTU over TCP) =======================
+Number   Pump_Speed           "Швидкість двигуна [%d rpm]"      <fan>         (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_ir:speed:number" }
+Number   Pump_Current         "Струм двигуна [%.2f A]"          <energy>      (gUnit2, gHistory, gChartPump)  { channel="modbus:data:unit2:u2_ir:current:number" }
+Number   Pump_Flow            "Витрата [%.1f m³/h]"             <flow>        (gUnit2, gHistory, gChartPump)  { channel="modbus:data:unit2:u2_ir:flow:number" }
+Number   Pump_MotorTemp       "Температура двигуна [%.1f °C]"   <temperature> (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_ir:motor_t:number" }
+Number   Pump_RunTime         "Напрацювання (uint32) [%d s]"    <time>        (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_ir:runtime:number" }
+DateTime Unit2_LastRead       "Unit 2: останнє читання [%1$tH:%1$tM:%1$tS]" <time> (gUnit2)                 { channel="modbus:data:unit2:u2_ir:speed:lastReadSuccess" }
+DateTime Unit2_LastError      "Unit 2: остання помилка [%1$tH:%1$tM:%1$tS]" <time> (gUnit2)                 { channel="modbus:data:unit2:u2_ir:speed:lastReadError" }
+
+Number   Pump_SpeedSetpoint   "Уставка швидкості [%d %%]"       <fan>         (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_hr:speed_sp:number" }
+Switch   Pump_Run             "Пуск насоса"                     <pump>        (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_coils:run:switch" }
+Switch   Pump_FaultReset      "Скидання аварії"                 <reset>       (gUnit2)                        { channel="modbus:data:unit2:u2_coils:reset:switch" }
+Switch   Pump_RunningFb       "Насос працює [MAP(onoff.map):%s]" <pump>       (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_di:running_fb:switch" }
+Switch   Pump_Fault           "Аварія частотника [MAP(onoff.map):%s]" <error> (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_di:fault:switch" }
+Switch   Pump_DryRun          "Сухий хід [MAP(onoff.map):%s]"   <error>       (gUnit2, gHistory)              { channel="modbus:data:unit2:u2_di:dry_run:switch" }
+
+String   Unit2_Quality        "Якість даних Unit 2 [MAP(quality.map):%s]" <network> (gUnit2, gHistory)
+
+// ======================= Керування =======================
+Switch   Auto_Mode            "Автоматичний режим"              <flow>        (gHistory)
+
+// ======================= Аварії =======================
+Switch   Alarm_HighTemp       "Висока температура (> 80 °C) [MAP(onoff.map):%s]" <fire>  (gAlarms, gHistory)
+Switch   Alarm_LowLevel       "Низький рівень [MAP(onoff.map):%s]"               <water> (gAlarms, gHistory)
+Switch   Alarm_HighLevel      "Переповнення [MAP(onoff.map):%s]"                 <water> (gAlarms, gHistory)
+Switch   Alarm_PumpFault      "Аварія насоса [MAP(onoff.map):%s]"                <error> (gAlarms, gHistory)
+Switch   Alarm_MotorOverload  "Перевантаження двигуна (> 7 A) [MAP(onoff.map):%s]" <energy> (gAlarms, gHistory)
+Switch   Alarm_CommUnit1      "Немає зв'язку з Unit 1 [MAP(onoff.map):%s]"       <network> (gAlarms, gHistory)
+Switch   Alarm_CommUnit2      "Немає зв'язку з Unit 2 [MAP(onoff.map):%s]"       <network> (gAlarms, gHistory)
+Number   Alarm_ActiveCount    "Активних аварій [%d]"            <siren>       (gHistory)
+Switch   Alarm_Unacked        "Неквитовані аварії [MAP(onoff.map):%s]" <siren> (gHistory)
+Switch   Alarm_Ack            "Квитування"                      <siren>
+String   Alarm_Last           "Остання подія [%s]"              <text>
+String   Alarm_Log            "Журнал [%s]"                     <text>
+
+// ======================= Історія (запити до persistence) =======================
+String   Trend_Period         "Період трендів"                  <line>
+Number   Tank_Temp_Avg1h      "Температура: середня за 1 год [%.1f °C]" <temperature>
+Number   Tank_Temp_Min1h      "Температура: мінімум за 1 год [%.1f °C]" <temperature>
+Number   Tank_Temp_Max1h      "Температура: максимум за 1 год [%.1f °C]" <temperature>
+Number   Pump_Current_Max1h   "Струм: максимум за 1 год [%.2f A]"        <energy>
+Number   Tank_Level_Avg1h     "Рівень: середній за 1 год [%.1f %%]"      <water>
+Number   Heater_Energy_1h       "Нагрівач спожив за 1 год [%.3f kWh]"      <energy>
+
+// ======================= OPC UA сервер (заповнює opcua-bridge через REST) =======================
+String   OPCUA_Status         "Стан OPC UA сервера [%s]"        <network>
+Number   OPCUA_Clients        "Підключених клієнтів [%d]"       <network>     (gHistory)
+Number   OPCUA_Subscriptions  "Активних підписок [%d]"          <network>
+Number   OPCUA_Writes         "Записів з OPC UA у Modbus [%d]"  <network>
+DateTime OPCUA_Heartbeat      "Heartbeat [%1$tH:%1$tM:%1$tS]"   <time>

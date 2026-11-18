@@ -1,0 +1,77 @@
+# Практична робота 12.1, варіант 5 — Industrial IoT Gateway: Modbus RTU/TCP -> openHAB -> OPC UA.
+#   Basic UI (SCADA):  http://localhost:8084/basicui/app?sitemap=scada
+#   OPC UA endpoint:   opc.tcp://localhost:4840/iotpr12/
+#   Modbus TCP:        localhost:5020 (unit 1),  Modbus RTU over TCP: localhost:5021 (unit 2)
+services:
+  modbus-sim:
+    build: ./modbus-sim
+    container_name: iotpr12-modbus-sim
+    restart: unless-stopped
+    # Фіксована IP-адреса: openHAB звертається за IP, а не за DNS-ім'ям. Інакше після зупинки контейнера
+    # Modbus binding отримує "Unknown host" і його пул з'єднань більше не відновлюється.
+    networks:
+      scada:
+        ipv4_address: 172.30.12.10
+    ports:
+      - "127.0.0.1:5020:5020"
+      - "127.0.0.1:5021:5021"
+
+  openhab:
+    image: openhab/openhab:4.2.2
+    container_name: iotpr12-openhab
+    restart: unless-stopped
+    depends_on:
+      - modbus-sim
+    networks: [scada]
+    ports:
+      - "127.0.0.1:8084:8080"
+    environment:
+      USER_ID: "9001"
+      GROUP_ID: "9001"
+      CRYPTO_POLICY: "unlimited"
+      EXTRA_JAVA_OPTS: "-Duser.timezone=Europe/Kyiv"
+    volumes:
+      - ./openhab/conf:/openhab/conf
+      - openhab_userdata:/openhab/userdata   # база RRD4j: userdata/persistence/rrd4j/*.rrd
+      - openhab_addons:/openhab/addons
+
+  opcua-bridge:
+    build: ./opcua-bridge
+    container_name: iotpr12-opcua
+    restart: unless-stopped
+    depends_on:
+      - openhab
+    networks: [scada]
+    ports:
+      - "127.0.0.1:4840:4840"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OPENHAB_URL: "http://openhab:8080"
+      SYNC_PERIOD: "1.0"
+    volumes:
+      - opcua_certs:/certs
+
+  # Одноразовий демонстраційний OPC UA клієнт: docker compose run --rm opcua-client
+  opcua-client:
+    build: ./opcua-bridge
+    profiles: ["tools"]
+    networks: [scada]
+    depends_on:
+      - opcua-bridge
+    env_file:
+      - path: .env
+        required: false
+    command: ["python", "-u", "opcua_client_demo.py"]
+
+networks:
+  scada:
+    ipam:
+      config:
+        - subnet: 172.30.12.0/24
+
+volumes:
+  openhab_userdata:
+  openhab_addons:
+  opcua_certs:

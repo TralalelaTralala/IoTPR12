@@ -1,0 +1,7 @@
+// Якість даних (аналог OPC UA StatusCode)
+GOOD=Good — дані актуальні
+UNCERTAIN_STALE=Uncertain — дані застарілі
+BAD_COMM=Bad — немає зв'язку з пристроєм
+NULL=невідомо
+UNDEF=невідомо
+-=невідомо
