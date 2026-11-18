@@ -277,17 +277,6 @@ IOTPR12/
 | 7 | `docker stop iotpr12-modbus-sim` | через 5 с `UNCERTAIN_STALE` (`UncertainLastUsableValue`), через 30 с `BAD_COMM` (`BadCommunicationError`) + аварії зв'язку; після `docker start` — `Good` за ~10 с |
 | 8 | `docker stop iotpr12-openhab` | усі вузли OPC UA `BadNotConnected`, повтори з backoff; після старту — `Good` |
 
-## Demo video
-
-[`video/IOTPR12.mp4`](video/IOTPR12.mp4) — 2:57, з озвученням. Показано: архітектуру, карту регістрів, SCADA-дашборд, ручне керування насосом, сирі регістри, OPC UA клієнт наживо (ролі, шифрування, запис у Modbus, HistoryRead, підписка), сухий хід і аварії, квитування й авто-режим, тренди, втрату та відновлення зв'язку з якістю Good → Uncertain → Bad → Good.
-
-Як зроблено (можна перезаписати):
-
-```bash
-bash video/record.sh        # Playwright (headless Chromium) у мережі стека -> video/out/IOTPR12-demo.webm + scenes.json
-```
-
-Під таймкоди сцен написано текст [`video/voiceover/tekst_tts.md`](video/voiceover/tekst_tts.md), озвучка — [`generate_pr12.py`](video/voiceover/generate_pr12.py) (OmniVoice), зведення — [`video/mux_pr12.py`](video/mux_pr12.py).
 
 
 - **Інструмент:** ChatGPT (Codex).
